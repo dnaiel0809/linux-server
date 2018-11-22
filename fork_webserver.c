@@ -18,6 +18,10 @@ char webpage[] =
 
 "<body><center><h1>hi</h1><img src=\"picture.jpeg\"></body></html>\r\n";
 
+void sigchld_handler(int s){
+while(waitpid(-1,NULL,WNOHANG)>0);
+}
+
 int main(int argc,char *argv[]){
     struct sockaddr_in server_addr,client_addr;
     socklen_t sin_len = sizeof(client_addr);
@@ -58,7 +62,14 @@ int main(int argc,char *argv[]){
        }
     
        printf("Got client connection.\n");
-    
+       sa.sa_handler=sigchld_handler;
+       sigemptyset(&sa.sa_mask);
+       sa.sa_flags=SA_RESTART;
+       if(sigaction(SIGCHLD,&sa,NULL)==-1)
+       {
+          perror("sigaction");
+          exit(1);
+	}
        if(!fork()){
          close(fd_server);
          memset(buf,0,2048);
